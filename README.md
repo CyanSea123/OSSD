@@ -14,7 +14,6 @@ We list the most important dependencies below.
 | shapely | 1.8.1 |
 | torchvision | 0.9.0 |
 
-Other dependencies can be found in `requirements.txt`.
 
 ## Datasets
 
