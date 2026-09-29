@@ -1,0 +1,226 @@
+# dataset configs
+
+dataset_cfg:
+  dataset_type: NuscenesKITTIMM
+  scale: FULL    # TINY or FULL
+  data_root_dir: /data/jyf/data-nu/nuScenes
+  category_name: Bus
+  test_version: v1.0-trainval
+  max_frame_dis: 1
+  use_seq_aug: False
+  use_smp_aug: True
+  cache_train: False
+  cache_eval: False
+  coordinate_mode: velodyne
+  preload_offset: 10
+  num_candidates_per_frame: 4
+  tracklet_length_lb: 1
+  search_npts: 1024
+  search_offset: 2.0
+  search_offset2: 0.0
+  search_scale: 1.0
+  template_npts: 1024
+  template_offset: 2.0
+  template_offset2: 0.0
+  template_scale: 1.0
+  target_scale: 1.25
+  target_offset: 0.0
+  offset_max: [1., 10., 10.]
+  up_axis: [0,0,1]
+  degree: True
+  max_length: 128
+  train_cfg:
+    cache: True
+    use_z: True
+    use_augmentation: False
+    preload_offset: 10
+  eval_cfg:
+    cache: False
+    use_z: True
+    reference_bbox: previous_pred
+    preload_offset: -1
+  dynamic_threshold: 0.15
+
+# model configs
+
+model_cfg:
+  model_type: CXTrack
+
+  backbone_cfg:
+    type: DGCNN
+    layers_cfg:
+      - {
+        mlps: [0, 64, 64, 128],
+        use_xyz: True,
+        sample_method: Range,
+        nsample: 32,
+      }
+      - {
+        mlps: [128, 128, 128, 128],
+        use_xyz: True,
+        sample_method: Range,
+        nsample: 32,
+      }
+      - {
+        mlps: [128, 256, 256, 256],
+        use_xyz: True,
+        sample_method: Range,
+        nsample: 32,
+      }
+    geo_channels: 256
+    out_channels: 256
+    downsample_ratios: [2,4,8]
+
+  transformer_cfg:
+    feat_dim: 256
+    mask_radii: False
+    layers_cfg:
+      - {
+        type: attn,
+        feat_dim: 256,
+        num_heads: 1,
+        attn_dropout: 0.1,
+        norm: 'layer_norm',
+        ffn_cfg: {
+          hidden_dim: 256,
+          activation: 'relu',
+          dropout: 0.1,
+          use_bias: True,
+          norm: 'layer_norm'
+        },
+        pos_emb_cfg: {
+          type: mlp
+        },
+        mask_emb: mask_trfm,
+        mask_pred: true,
+        center_pred: true,
+        dropout: 0.1
+      }
+      - {
+        type: attn,
+        feat_dim: 256,
+        num_heads: 1,
+        attn_dropout: 0.1,
+        norm: 'layer_norm',
+        ffn_cfg: {
+          hidden_dim: 256,
+          activation: 'relu',
+          dropout: 0.1,
+          use_bias: True,
+          norm: 'layer_norm'
+        },
+        pos_emb_cfg: {
+          type: mlp
+        },
+        mask_emb: mask_trfm,
+        mask_pred: true,
+        center_pred: true,
+        dropout: 0.1
+      }
+      - {
+        type: attn,
+        feat_dim: 256,
+        num_heads: 1,
+        attn_dropout: 0.1,
+        norm: 'layer_norm',
+        ffn_cfg: {
+          hidden_dim: 256,
+          activation: 'relu',
+          dropout: 0.1,
+          use_bias: True,
+          norm: 'layer_norm'
+        },
+        pos_emb_cfg: {
+          type: mlp
+        },
+        mask_emb: mask_trfm,
+        mask_pred: true,
+        center_pred: true,
+        dropout: 0.1
+      }
+      - {
+        type: attn,
+        feat_dim: 256,
+        num_heads: 1,
+        attn_dropout: 0.1,
+        norm: 'layer_norm',
+        ffn_cfg: {
+          hidden_dim: 256,
+          activation: 'relu',
+          dropout: 0.1,
+          use_bias: True,
+          norm: 'layer_norm'
+        },
+        pos_emb_cfg: {
+          type: mlp
+        },
+        mask_emb: mask_trfm,
+        mask_pred: true,
+        center_pred: true,
+        dropout: 0.1
+      }
+
+
+  exrpn_cfg:
+    feat_dim: 256
+    transformer_cfg:
+      layers_cfg:
+      - type: attn
+        radius: 0.3
+        feat_dim: 256
+        num_heads: 1
+        attn_dropout: 0.1
+        norm: layer_norm
+        pos_emb_cfg:
+          type: mlp
+        mask_emb: mask_trfm
+        center_emb: true
+        dropout: 0.1
+        sigma_n2: 0.1
+        fixed_sigma_n2: False
+  # rpn_cfg:
+  #   num_proposal: 64
+  #   feat_dim: 256
+  #   normalize_xyz: False
+
+# task configs
+
+task_type: CXTrackTask
+
+# optimizer & scheduler configs
+
+optimizer_cfg:
+  optimizer_type: Adam
+  lr: 0.001
+  weight_decay: 0
+  betas: [0.5, 0.999]
+  eps: 1.0e-6
+
+scheduler_cfg:
+  scheduler_type: StepLR
+  step_size: 40
+  gamma: 0.2
+
+loss_cfg:
+  cascaded_center_loss_func: smooth_l1
+  refined_loss_func: smooth_l1
+  cascaded_center_weight: 1.0
+  cascaded_mask_weight: 0.2
+  refined_mask_weight: 1.5
+  refined_weight: 1.0
+
+# train & eval configs
+
+train_cfg:
+  max_epochs: 100
+  batch_size: 60
+  num_workers: 4
+  save_per_epoch: 20
+  save_top_k: 10
+  val_per_epoch: 1
+
+eval_cfg:
+  batch_size: 1
+  num_workers: 0
+  iou_space: 3
+  iou_mode: 7-DoF
